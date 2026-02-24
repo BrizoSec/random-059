@@ -1,0 +1,12 @@
+auth_burst:
+  window_seconds: 60            # sliding window duration
+  distinct_account_threshold: 5 # alert if >= N distinct accounts seen per host in window
+  max_events_tracked: 1000      # cap per-host deque length to bound memory
+
+auth_chain:
+  max_chain_length: 4           # alert if any path has > N hops (sessions)
+  max_graph_nodes: 50000        # skip walk if graph exceeds this node count (safety)
+  cycle_detection: true         # nx.all_simple_paths handles this; flag is documentation
+
+privilege_escalation:
+  enabled: true                 # set false to disable this detection globally
