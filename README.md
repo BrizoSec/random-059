@@ -1,6 +1,6 @@
 # privesc-detector
 
-A Python-based privilege escalation and lateral movement detection system. Ingests authentication events from CrowdStrike Falcon and Unix auth logs, models them as a directed graph stored in MongoDB, and runs three independent detections in real time as new events arrive.
+A Python-based privilege escalation and lateral movement detection system. Ingests authentication events from CrowdStrike Falcon and Unix auth logs, models them as a directed graph stored in MongoDB, and runs four independent detections in real time as new events arrive. Reference enrichment data (vault keytab inventory, critical account catalogue) is loaded at startup and refreshed on a configurable background interval.
 
 ---
 
@@ -9,7 +9,7 @@ A Python-based privilege escalation and lateral movement detection system. Inges
 When an auth event is ingested via the API, the system:
 1. Persists the event as a directed graph edge in MongoDB
 2. Rebuilds the in-memory auth graph from all edges
-3. Runs all three detections against the new event
+3. Runs all four detections against the new event
 4. Writes any fired alerts back to MongoDB
 5. Returns the results immediately in the API response
 
@@ -17,9 +17,12 @@ When an auth event is ingested via the API, the system:
 
 | Detection | Trigger | Severity |
 | --- | --- | --- |
-| **Privilege Escalation** | Any auth edge where `dst_privilege > src_privilege` | Scaled by delta (low → critical) |
-| **Auth Burst** | Distinct account switches on a single host exceed a threshold within a sliding time window | High |
-| **Excessive Auth Chain** | A lateral movement path (SSH→auth→SSH→...) across machines exceeds a configured hop count | High |
+| **A — Privilege Escalation** | Any auth edge where `dst_privilege > src_privilege` | Scaled by delta (low → critical) |
+| **B — Auth Burst** | Distinct account switches on a single host exceed a threshold within a sliding time window | High |
+| **C — Excessive Auth Chain** | A lateral movement path (SSH→auth→SSH→...) across machines exceeds a configured hop count | High |
+| **D — Keytab Smuggling** | A confirmed `kinit` success (`auth_success=True`) references a keytab not registered in the vault, or not expected on that host | High / Critical if account is flagged |
+
+Detection D uses the enrichment layer: a vault keytab inventory (host → expected keytab paths) and a critical accounts catalogue. Severity escalates to `critical` when the initiating account is marked critical in the catalogue.
 
 ---
 
@@ -35,19 +38,20 @@ POST /ingest/event
   Graph Builder (NetworkX DiGraph)
        │
        ▼
-  EventDispatcher
-  ├── Detection A: Privilege Escalation  (per-edge, sync)
+  EventDispatcher ◄──── EnrichmentCacheManager
+  ├── Detection A: Privilege Escalation  (per-edge, sync)          │
   ├── Detection B: Auth Burst            (in-memory sliding window, sync)
-  └── Detection C: Auth Chain            (iterative DFS, sync)
-       │
-       ▼
-  AlertStore (Motor/MongoDB)
-       │
-       ▼
-  GET /alerts
+  ├── Detection C: Auth Chain            (iterative DFS, sync)     │
+  └── Detection D: Keytab Smuggling      (per-edge, enrichment lookup, sync)
+       │                                         ▲
+       ▼                                         │ background refresh
+  AlertStore (Motor/MongoDB)           ┌─────────┴─────────┐
+       │                               │  VaultEnrichment  │
+       ▼                               │  CriticalAccounts │
+  GET /alerts                          └───────────────────┘
 ```
 
-**Hybrid async/sync design:** The store layer uses Motor (async) for non-blocking MongoDB I/O. All detection logic is pure synchronous Python — no async required — making it easy to unit test and reason about independently.
+**Hybrid async/sync design:** The store layer uses Motor (async) for non-blocking MongoDB I/O. All detection logic is pure synchronous Python — no async required — making it easy to unit test independently. The `EnrichmentCacheManager` loads reference data synchronously at startup and refreshes it in a background `asyncio.Task` on a configurable interval; detections receive a plain `AllEnrichments` snapshot with no async involvement.
 
 ---
 
@@ -68,10 +72,10 @@ POST /ingest/event
 privesc-detector/
 ├── pyproject.toml
 ├── config/
-│   └── thresholds.yaml          # Tunable detection thresholds
+│   └── thresholds.yaml          # Tunable detection thresholds + enrichment refresh interval
 └── src/
     └── privesc_detector/
-        ├── main.py              # FastAPI app + lifespan startup
+        ├── main.py              # FastAPI app + lifespan startup/shutdown
         ├── config.py            # PyYAML → typed AppConfig dataclasses
         ├── dispatcher.py        # Routes new edges to all detections
         ├── ingest/
@@ -79,7 +83,7 @@ privesc-detector/
         │   └── unix_auth.py     # Unix auth log stub (replace with real parser)
         ├── models/
         │   ├── node.py          # AccountNode, HostNode
-        │   ├── edge.py          # AuthEdge
+        │   ├── edge.py          # AuthEdge (includes auth_success flag)
         │   └── alert.py         # Alert
         ├── store/
         │   ├── client.py        # Motor client setup
@@ -89,11 +93,17 @@ privesc-detector/
         │   └── alerts.py        # AlertStore
         ├── graph/
         │   └── builder.py       # load_graph(edges) → nx.DiGraph
+        ├── enrichment/
+        │   ├── base.py          # EnrichmentStore ABC
+        │   ├── vault.py         # VaultEnrichment + VaultCache (host → keytab paths)
+        │   ├── critical_accounts.py  # CriticalAccountsEnrichment + CriticalAccountsCache
+        │   └── cache.py         # EnrichmentCacheManager + AllEnrichments snapshot
         ├── detections/
         │   ├── base.py          # DetectionResult dataclass
         │   ├── privilege_escalation.py
         │   ├── auth_burst.py    # + BurstWindowState
-        │   └── auth_chain.py    # + _all_simple_paths_from DFS
+        │   ├── auth_chain.py    # + _all_simple_paths_from DFS
+        │   └── keytab_smuggling.py  # Detection D
         └── api/
             ├── dependencies.py
             └── routes/
@@ -134,6 +144,12 @@ auth_chain:
 
 privilege_escalation:
   enabled: true
+
+keytab_smuggling:
+  enabled: true
+
+enrichment:
+  refresh_interval_seconds: 300  # how often vault + account data is reloaded
 ```
 
 Override the MongoDB connection via environment variables:
@@ -167,7 +183,7 @@ Tests are pure unit tests — no running MongoDB required.
 pytest tests/ -v
 ```
 
-42 tests covering all three detections, both ingest stubs, and the alert API routes.
+63 tests covering all four detections, the enrichment layer, both ingest stubs, and the alert API routes.
 
 ---
 
@@ -188,7 +204,8 @@ pytest tests/ -v
 - [ ] Tune default thresholds against real data once ingestion is live
 - [ ] Add deduplication logic to the dispatcher so the same alert is not re-fired on every subsequent edge in an ongoing burst
 - [ ] Extend Detection C to track which account changed at each hop, not just the node sequence, for richer alert context
-- [ ] Add a Detection D for Kerberos keytab abuse — flag when `keytab_access=True` in sessions combined with cross-host movement
+- [ ] Connect the enrichment stubs to real data sources — replace `VaultEnrichment.load()` with a real vault API/DB call and `CriticalAccountsEnrichment.load()` with a real directory query
+- [ ] Extend Detection D to cross-reference `allowed_hosts` in the critical accounts cache — flag when a critical service account authenticates from an unexpected host
 
 ### API & operations
 - [ ] Add authentication to the API (API key or OAuth2)

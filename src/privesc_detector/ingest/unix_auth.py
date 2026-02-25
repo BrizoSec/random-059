@@ -41,9 +41,11 @@ def fetch_events() -> list[AuthEdge]:
             host_id="host:app-dev-02",
             raw_source="unix_auth",
             timestamp=now,
+            auth_success=True,
             metadata={
                 "log_line": "kinit[5678]: TGT obtained for alice-admin@REALM.CORP",
-                "keytab": "/etc/krb5.keytab",
+                "keytab_path": "/tmp/smuggled.keytab",
+                "pam_service": "krb5",
                 "realm": "REALM.CORP",
             },
         ),

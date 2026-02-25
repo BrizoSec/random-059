@@ -29,10 +29,22 @@ class PrivEscConfig:
 
 
 @dataclass
+class KeytabSmugglingConfig:
+    enabled: bool = True
+
+
+@dataclass
+class EnrichmentConfig:
+    refresh_interval_seconds: int = 300
+
+
+@dataclass
 class AppConfig:
     auth_burst: BurstConfig = field(default_factory=BurstConfig)
     auth_chain: ChainConfig = field(default_factory=ChainConfig)
     privilege_escalation: PrivEscConfig = field(default_factory=PrivEscConfig)
+    keytab_smuggling: KeytabSmugglingConfig = field(default_factory=KeytabSmugglingConfig)
+    enrichment: EnrichmentConfig = field(default_factory=EnrichmentConfig)
     mongo_uri: str = "mongodb://localhost:27017"
     mongo_db: str = "privesc_detector"
 
@@ -55,6 +67,8 @@ def load_config(path: str | Path | None = None) -> AppConfig:
     burst_raw = raw.get("auth_burst", {})
     chain_raw = raw.get("auth_chain", {})
     privesc_raw = raw.get("privilege_escalation", {})
+    keytab_raw = raw.get("keytab_smuggling", {})
+    enrichment_raw = raw.get("enrichment", {})
 
     return AppConfig(
         auth_burst=BurstConfig(
@@ -69,6 +83,12 @@ def load_config(path: str | Path | None = None) -> AppConfig:
         ),
         privilege_escalation=PrivEscConfig(
             enabled=privesc_raw.get("enabled", True),
+        ),
+        keytab_smuggling=KeytabSmugglingConfig(
+            enabled=keytab_raw.get("enabled", True),
+        ),
+        enrichment=EnrichmentConfig(
+            refresh_interval_seconds=enrichment_raw.get("refresh_interval_seconds", 300),
         ),
         mongo_uri=os.getenv("MONGO_URI", "mongodb://localhost:27017"),
         mongo_db=os.getenv("MONGO_DB", "privesc_detector"),

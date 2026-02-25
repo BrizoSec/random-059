@@ -35,3 +35,4 @@ class AuthEdge(BaseModel):
     host_id: str  # host where the auth event was recorded
     raw_source: RawSource
     metadata: dict[str, Any] = Field(default_factory=dict)
+    auth_success: bool = False  # True only for confirmed auth.log/PAM success events

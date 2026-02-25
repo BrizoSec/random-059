@@ -17,7 +17,7 @@ def _utcnow() -> datetime:
     return datetime.now(tz=timezone.utc)
 
 
-DetectionType = Literal["privilege_escalation", "auth_burst", "auth_chain"]
+DetectionType = Literal["privilege_escalation", "auth_burst", "auth_chain", "keytab_smuggling"]
 Severity = Literal["low", "medium", "high", "critical"]
 
 

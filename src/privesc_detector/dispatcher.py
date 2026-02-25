@@ -13,8 +13,10 @@ import networkx as nx
 
 from privesc_detector.config import AppConfig
 from privesc_detector.detections import auth_burst, auth_chain, privilege_escalation
+from privesc_detector.detections import keytab_smuggling
 from privesc_detector.detections.auth_burst import BurstWindowState
 from privesc_detector.detections.base import DetectionResult
+from privesc_detector.enrichment.cache import EnrichmentCacheManager
 from privesc_detector.models.alert import Alert
 from privesc_detector.models.edge import AuthEdge
 from privesc_detector.store.alerts import AlertStore
@@ -25,10 +27,12 @@ class EventDispatcher:
         self,
         alert_store: AlertStore,
         burst_state: BurstWindowState,
+        enrichment_cache: EnrichmentCacheManager,
         config: AppConfig,
     ) -> None:
         self._alert_store = alert_store
         self._burst_state = burst_state
+        self._enrichment_cache = enrichment_cache
         self._config = config
 
     async def on_edge_inserted(
@@ -63,6 +67,15 @@ class EventDispatcher:
         results_c = auth_chain.detect(graph, self._config.auth_chain, edge.src_node_id)
         for result in results_c:
             alert = _to_alert(result)
+            await self._alert_store.insert(alert)
+            fired.append(alert)
+
+        # Detection D — keytab smuggling, per-edge, synchronous
+        result_d = keytab_smuggling.detect(
+            edge, self._enrichment_cache.current, self._config.keytab_smuggling
+        )
+        if result_d:
+            alert = _to_alert(result_d)
             await self._alert_store.insert(alert)
             fired.append(alert)
 

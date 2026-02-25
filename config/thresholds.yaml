@@ -10,3 +10,9 @@ auth_chain:
 
 privilege_escalation:
   enabled: true                 # set false to disable this detection globally
+
+keytab_smuggling:
+  enabled: true                 # set false to disable this detection globally
+
+enrichment:
+  refresh_interval_seconds: 300 # how often the background task re-loads enrichments

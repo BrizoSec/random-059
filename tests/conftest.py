@@ -8,8 +8,11 @@ from typing import Any, Callable
 import networkx as nx
 import pytest
 
-from privesc_detector.config import AppConfig, BurstConfig, ChainConfig, PrivEscConfig
+from privesc_detector.config import AppConfig, BurstConfig, ChainConfig, KeytabSmugglingConfig, PrivEscConfig
 from privesc_detector.detections.auth_burst import BurstWindowState
+from privesc_detector.enrichment.cache import AllEnrichments
+from privesc_detector.enrichment.critical_accounts import CriticalAccountsCache, CriticalAccountsEnrichment
+from privesc_detector.enrichment.vault import VaultCache, VaultEnrichment
 from privesc_detector.models.edge import AuthEdge
 from privesc_detector.models.node import AccountNode, HostNode
 
@@ -99,6 +102,31 @@ def make_host_node() -> Callable[..., HostNode]:
         return HostNode(**defaults)
 
     return _factory
+
+
+# ---------------------------------------------------------------------------
+# Enrichment fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def vault_cache() -> VaultCache:
+    return VaultEnrichment.to_cache(VaultEnrichment().load())
+
+
+@pytest.fixture
+def critical_accounts_cache() -> CriticalAccountsCache:
+    return CriticalAccountsEnrichment.to_cache(CriticalAccountsEnrichment().load())
+
+
+@pytest.fixture
+def all_enrichments(vault_cache: VaultCache, critical_accounts_cache: CriticalAccountsCache) -> AllEnrichments:
+    return AllEnrichments(vault=vault_cache, critical_accounts=critical_accounts_cache)
+
+
+@pytest.fixture
+def keytab_config() -> KeytabSmugglingConfig:
+    return KeytabSmugglingConfig(enabled=True)
 
 
 # ---------------------------------------------------------------------------
