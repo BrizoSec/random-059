@@ -7,7 +7,7 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 
-from privesc_detector.api.routes import alerts, health, ingest
+from privesc_detector.api.routes import alerts, enrichment, health, ingest
 from privesc_detector.config import load_config
 from privesc_detector.detections.auth_burst import BurstWindowState
 from privesc_detector.dispatcher import EventDispatcher
@@ -70,6 +70,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(ingest.router)
     app.include_router(alerts.router)
+    app.include_router(enrichment.router)
     return app
 
 

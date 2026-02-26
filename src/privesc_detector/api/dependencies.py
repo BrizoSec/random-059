@@ -10,6 +10,7 @@ from fastapi import Request
 
 from privesc_detector.config import AppConfig
 from privesc_detector.dispatcher import EventDispatcher
+from privesc_detector.enrichment.cache import EnrichmentCacheManager
 from privesc_detector.store.alerts import AlertStore
 from privesc_detector.store.edges import EdgeStore
 from privesc_detector.store.nodes import NodeStore
@@ -33,3 +34,7 @@ def get_alert_store(request: Request) -> AlertStore:
 
 def get_dispatcher(request: Request) -> EventDispatcher:
     return request.app.state.dispatcher  # type: ignore[no-any-return]
+
+
+def get_enrichment_cache(request: Request) -> EnrichmentCacheManager:
+    return request.app.state.enrichment_cache  # type: ignore[no-any-return]
