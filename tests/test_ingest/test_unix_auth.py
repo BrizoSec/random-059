@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from privesc_detector.ingest import unix_auth
-from privesc_detector.models.edge import AuthEdge
+from privesc_detector.models.events import AuthenticationEvent, BaseAuthEvent, SessionEvent
 
 
 def test_fetch_events_returns_list() -> None:
@@ -12,9 +12,9 @@ def test_fetch_events_returns_list() -> None:
     assert len(events) > 0
 
 
-def test_all_events_are_auth_edges() -> None:
+def test_all_events_are_auth_events() -> None:
     for event in unix_auth.fetch_events():
-        assert isinstance(event, AuthEdge)
+        assert isinstance(event, BaseAuthEvent)
 
 
 def test_raw_source_is_unix_auth() -> None:
@@ -34,7 +34,11 @@ def test_events_have_unique_ids() -> None:
     assert len(ids) == len(set(ids))
 
 
-def test_edge_types_are_valid() -> None:
-    valid = {"ssh", "kinit", "su"}
+def test_mechanisms_are_valid() -> None:
+    session_mechanisms = {"ssh", "su", "sudo", "rdp", "winrm"}
+    auth_mechanisms = {"kinit", "oidc", "certificate", "fido2"}
     for event in unix_auth.fetch_events():
-        assert event.edge_type in valid
+        if isinstance(event, SessionEvent):
+            assert event.mechanism in session_mechanisms
+        elif isinstance(event, AuthenticationEvent):
+            assert event.mechanism in auth_mechanisms

@@ -107,10 +107,10 @@ def _collect_edge_ids(graph: nx.DiGraph, path: list[str]) -> list[str]:
     ids: list[str] = []
     for src, dst in zip(path, path[1:]):
         edge_data = graph.get_edge_data(src, dst) or {}
-        # edge_list holds all parallel edges; use the first edge_id for each hop
+        # edge_list holds all parallel edges; use the first event_id for each hop
         edge_list = edge_data.get("edge_list", [])
         if edge_list:
-            ids.append(edge_list[0]["edge_id"])
-        elif "edge_id" in edge_data:
-            ids.append(edge_data["edge_id"])
+            ids.append(edge_list[0]["event_id"])
+        elif "event_id" in edge_data:
+            ids.append(edge_data["event_id"])
     return ids

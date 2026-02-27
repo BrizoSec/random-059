@@ -1,10 +1,11 @@
 """CrowdStrike Falcon ingest stub.
 
-Returns a fixed set of mock AuthEdge objects that simulate what the real
+Returns a fixed set of mock auth events that simulate what the real
 Falcon Event Streams / Detections API would produce after normalization.
+CrowdStrike events are confirmed outcomes (session established, su succeeded).
 
 Replace this module's `fetch_events()` with a real Falcon API client when
-credentials are available. The return type contract (list[AuthEdge]) must
+credentials are available. The return type contract (list[AuthEvent]) must
 be preserved.
 """
 
@@ -12,19 +13,19 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from privesc_detector.models.edge import AuthEdge
+from privesc_detector.models.events import AuthEvent, SessionEvent
 
 
-def fetch_events() -> list[AuthEdge]:
-    """Return mock CrowdStrike auth events as normalized AuthEdge objects."""
+def fetch_events() -> list[AuthEvent]:
+    """Return mock CrowdStrike auth events as normalized event objects."""
     now = datetime.now(tz=timezone.utc)
     return [
-        AuthEdge(
+        SessionEvent(
             src_account_id="account:jsmith",
             src_host_id="host:web-prod-01",
             dst_account_id="account:svc-deploy",
             dst_host_id="host:web-prod-01",
-            edge_type="su",
+            mechanism="su",
             src_privilege=0.2,
             dst_privilege=0.7,
             host_id="host:web-prod-01",
@@ -36,12 +37,12 @@ def fetch_events() -> list[AuthEdge]:
                 "command_line": "sudo -u svc-deploy bash",
             },
         ),
-        AuthEdge(
+        SessionEvent(
             src_account_id="account:svc-deploy",
             src_host_id="host:web-prod-01",
             dst_account_id="account:root",
             dst_host_id="host:web-prod-01",
-            edge_type="su",
+            mechanism="su",
             src_privilege=0.7,
             dst_privilege=1.0,
             host_id="host:web-prod-01",
@@ -53,12 +54,12 @@ def fetch_events() -> list[AuthEdge]:
                 "command_line": "su -",
             },
         ),
-        AuthEdge(
+        SessionEvent(
             src_account_id="account:jsmith",
             src_host_id="host:web-prod-01",
             dst_account_id="account:jsmith",
             dst_host_id="host:db-prod-01",
-            edge_type="ssh",
+            mechanism="ssh",
             src_privilege=0.5,
             dst_privilege=0.5,
             host_id="host:db-prod-01",

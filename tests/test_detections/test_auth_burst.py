@@ -10,7 +10,7 @@ import pytest
 from privesc_detector.config import BurstConfig
 from privesc_detector.detections import auth_burst
 from privesc_detector.detections.auth_burst import BurstWindowState
-from privesc_detector.models.edge import AuthEdge
+from privesc_detector.models.events import AuthEvent
 
 
 def _ts(offset_seconds: int = 0) -> datetime:
@@ -18,7 +18,7 @@ def _ts(offset_seconds: int = 0) -> datetime:
 
 
 def test_no_alert_below_threshold(
-    make_edge: Callable[..., AuthEdge],
+    make_edge: Callable[..., AuthEvent],
     burst_state: BurstWindowState,
     burst_config: BurstConfig,
 ) -> None:
@@ -30,7 +30,7 @@ def test_no_alert_below_threshold(
 
 
 def test_alert_at_threshold(
-    make_edge: Callable[..., AuthEdge],
+    make_edge: Callable[..., AuthEvent],
     burst_state: BurstWindowState,
     burst_config: BurstConfig,
 ) -> None:
@@ -45,7 +45,7 @@ def test_alert_at_threshold(
 
 
 def test_same_account_repeated_does_not_inflate_count(
-    make_edge: Callable[..., AuthEdge],
+    make_edge: Callable[..., AuthEvent],
     burst_state: BurstWindowState,
     burst_config: BurstConfig,
 ) -> None:
@@ -58,7 +58,7 @@ def test_same_account_repeated_does_not_inflate_count(
 
 
 def test_window_eviction(
-    make_edge: Callable[..., AuthEdge],
+    make_edge: Callable[..., AuthEvent],
     burst_state: BurstWindowState,
 ) -> None:
     config = BurstConfig(window_seconds=30, distinct_account_threshold=3)
@@ -81,7 +81,7 @@ def test_window_eviction(
 
 
 def test_per_host_isolation(
-    make_edge: Callable[..., AuthEdge],
+    make_edge: Callable[..., AuthEvent],
     burst_state: BurstWindowState,
     burst_config: BurstConfig,
 ) -> None:
@@ -101,7 +101,7 @@ def test_per_host_isolation(
 
 
 def test_alert_includes_host_id(
-    make_edge: Callable[..., AuthEdge],
+    make_edge: Callable[..., AuthEvent],
     burst_state: BurstWindowState,
     burst_config: BurstConfig,
 ) -> None:
@@ -118,7 +118,7 @@ def test_alert_includes_host_id(
 
 
 def test_state_reset_clears_window(
-    make_edge: Callable[..., AuthEdge],
+    make_edge: Callable[..., AuthEvent],
     burst_config: BurstConfig,
 ) -> None:
     state = BurstWindowState()

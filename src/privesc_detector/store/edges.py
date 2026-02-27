@@ -5,10 +5,12 @@ from __future__ import annotations
 from datetime import datetime
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from pydantic import TypeAdapter
 
-from privesc_detector.models.edge import AuthEdge
+from privesc_detector.models.events import AuthEvent
 
 COLLECTION = "edges"
+_event_adapter: TypeAdapter[AuthEvent] = TypeAdapter(AuthEvent)
 
 
 class EdgeStore:
@@ -20,22 +22,22 @@ class EdgeStore:
         await self._col.create_index([("src_node_id", 1), ("dst_node_id", 1)])
         await self._col.create_index([("timestamp", -1)])
 
-    async def insert(self, edge: AuthEdge) -> str:
-        doc = edge.model_dump(mode="json")
+    async def insert(self, event: AuthEvent) -> str:
+        doc = event.model_dump(mode="json")
         await self._col.insert_one(doc)
-        return edge.id
+        return event.id
 
-    async def get_recent(self, host_id: str, since: datetime) -> list[AuthEdge]:
+    async def get_recent(self, host_id: str, since: datetime) -> list[AuthEvent]:
         cursor = self._col.find(
             {"host_id": host_id, "timestamp": {"$gte": since.isoformat()}}
         ).sort("timestamp", -1)
-        return [AuthEdge(**doc) async for doc in cursor]
+        return [_event_adapter.validate_python(doc) async for doc in cursor]
 
-    async def get_by_ids(self, ids: list[str]) -> list[AuthEdge]:
+    async def get_by_ids(self, ids: list[str]) -> list[AuthEvent]:
         cursor = self._col.find({"id": {"$in": ids}})
-        return [AuthEdge(**doc) async for doc in cursor]
+        return [_event_adapter.validate_python(doc) async for doc in cursor]
 
-    async def get_all_for_graph(self) -> list[AuthEdge]:
-        """Fetch all edges for building the in-memory NetworkX graph."""
+    async def get_all_for_graph(self) -> list[AuthEvent]:
+        """Fetch all events for building the in-memory NetworkX graph."""
         cursor = self._col.find({})
-        return [AuthEdge(**doc) async for doc in cursor]
+        return [_event_adapter.validate_python(doc) async for doc in cursor]

@@ -69,9 +69,10 @@ def test_edge_ids_collected_from_path(chain_config: ChainConfig) -> None:
         g.add_edge(
             src,
             dst,
-            edge_id=f"eid-{i}",
-            edge_list=[{"edge_id": f"eid-{i}", "edge_type": "ssh"}],
-            edge_type="ssh",
+            event_id=f"eid-{i}",
+            edge_list=[{"event_id": f"eid-{i}", "mechanism": "ssh"}],
+            mechanism="ssh",
+            event_category="session",
         )
 
     results = auth_chain.detect(g, chain_config, "n0")

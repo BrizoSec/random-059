@@ -1,7 +1,7 @@
-"""Graph builder — converts a list of AuthEdge into a NetworkX DiGraph.
+"""Graph builder — converts a list of auth events into a NetworkX DiGraph.
 
 This is a pure synchronous function with no database dependency.
-The caller is responsible for fetching edges from Mongo (async); this
+The caller is responsible for fetching events from Mongo (async); this
 module only handles the in-memory graph construction.
 """
 
@@ -9,19 +9,20 @@ from __future__ import annotations
 
 import networkx as nx
 
-from privesc_detector.models.edge import AuthEdge
+from privesc_detector.models.events import AuthEvent
 
 
-def load_graph(edges: list[AuthEdge]) -> nx.DiGraph:
-    """Build a directed graph from a list of AuthEdge objects.
+def load_graph(events: list[AuthEvent]) -> nx.DiGraph:
+    """Build a directed graph from a list of auth events.
 
     Node attributes:
-        privilege_tier  -- taken from the edge's src/dst privilege at event time
-        host_id         -- host where the auth event occurred (on src node)
+        privilege_tier  -- taken from the event's src/dst privilege at event time
+        host_id         -- host where the account was present at this node
 
     Edge attributes:
-        edge_id         -- AuthEdge.id
-        edge_type       -- "ssh" | "kinit" | "su"
+        event_id        -- AuthEvent.id
+        event_category  -- "authentication" | "session"
+        mechanism       -- e.g. "ssh", "kinit", "su"
         timestamp       -- event datetime (ISO string for JSON-serializability)
         session_id      -- may be None
         src_privilege   -- float
@@ -29,31 +30,30 @@ def load_graph(edges: list[AuthEdge]) -> nx.DiGraph:
     """
     g: nx.DiGraph = nx.DiGraph()
 
-    for edge in edges:
-        # Upsert nodes — later edges may carry higher privilege values; we keep
+    for event in events:
+        # Upsert nodes — later events may carry higher privilege values; we keep
         # the maximum seen so we don't accidentally downgrade a node's tier.
-        _add_or_update_node(g, edge.src_node_id, edge.src_privilege, edge.src_host_id)
-        _add_or_update_node(g, edge.dst_node_id, edge.dst_privilege, edge.dst_host_id)
+        _add_or_update_node(g, event.src_node_id, event.src_privilege, event.src_host_id)
+        _add_or_update_node(g, event.dst_node_id, event.dst_privilege, event.dst_host_id)
 
-        # For parallel edges (same src→dst pair) we store a list of edge dicts
-        # under a single DiGraph edge keyed by the first edge_id we see.
-        # Callers that need multi-edge semantics should use nx.MultiDiGraph instead;
-        # for DFS chain detection, DiGraph with an edge_list attribute is sufficient.
-        if g.has_edge(edge.src_node_id, edge.dst_node_id):
-            g[edge.src_node_id][edge.dst_node_id]["edge_list"].append(
-                _edge_attrs(edge)
+        # For parallel edges (same src→dst pair) we store a list of event dicts
+        # under a single DiGraph edge keyed by the first event_id we see.
+        if g.has_edge(event.src_node_id, event.dst_node_id):
+            g[event.src_node_id][event.dst_node_id]["edge_list"].append(
+                _event_attrs(event)
             )
         else:
             g.add_edge(
-                edge.src_node_id,
-                edge.dst_node_id,
-                edge_id=edge.id,
-                edge_list=[_edge_attrs(edge)],
-                edge_type=edge.edge_type,
-                timestamp=edge.timestamp.isoformat(),
-                session_id=edge.session_id,
-                src_privilege=edge.src_privilege,
-                dst_privilege=edge.dst_privilege,
+                event.src_node_id,
+                event.dst_node_id,
+                event_id=event.id,
+                edge_list=[_event_attrs(event)],
+                event_category=event.event_category,
+                mechanism=event.mechanism,
+                timestamp=event.timestamp.isoformat(),
+                session_id=event.session_id,
+                src_privilege=event.src_privilege,
+                dst_privilege=event.dst_privilege,
             )
 
     return g
@@ -69,12 +69,13 @@ def _add_or_update_node(
         g.nodes[node_id]["privilege_tier"] = max(existing, privilege)
 
 
-def _edge_attrs(edge: AuthEdge) -> dict:  # type: ignore[type-arg]
+def _event_attrs(event: AuthEvent) -> dict:  # type: ignore[type-arg]
     return {
-        "edge_id": edge.id,
-        "edge_type": edge.edge_type,
-        "timestamp": edge.timestamp.isoformat(),
-        "session_id": edge.session_id,
-        "src_privilege": edge.src_privilege,
-        "dst_privilege": edge.dst_privilege,
+        "event_id": event.id,
+        "event_category": event.event_category,
+        "mechanism": event.mechanism,
+        "timestamp": event.timestamp.isoformat(),
+        "session_id": event.session_id,
+        "src_privilege": event.src_privilege,
+        "dst_privilege": event.dst_privilege,
     }

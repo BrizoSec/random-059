@@ -16,7 +16,7 @@ from datetime import datetime, timedelta, timezone
 
 from privesc_detector.config import BurstConfig
 from privesc_detector.detections.base import DetectionResult
-from privesc_detector.models.edge import AuthEdge
+from privesc_detector.models.events import AuthEvent
 
 # (timestamp, account_id) tuples stored per host
 _Event = tuple[datetime, str]
@@ -73,24 +73,24 @@ class BurstWindowState:
 
 
 def detect(
-    edge: AuthEdge,
+    event: AuthEvent,
     state: BurstWindowState,
     config: BurstConfig,
 ) -> DetectionResult | None:
     """Record the event and return a DetectionResult if burst threshold is met."""
-    ts = edge.timestamp
+    ts = event.timestamp
     if ts.tzinfo is None:
         ts = ts.replace(tzinfo=timezone.utc)
 
     state.record(
-        host_id=edge.host_id,
+        host_id=event.host_id,
         timestamp=ts,
-        account_id=edge.src_account_id,
+        account_id=event.src_account_id,
         max_events=config.max_events_tracked,
     )
 
     distinct = state.get_distinct_accounts_in_window(
-        host_id=edge.host_id,
+        host_id=event.host_id,
         window_seconds=config.window_seconds,
         as_of=ts,
     )
@@ -101,11 +101,11 @@ def detect(
     return DetectionResult(
         detection_type="auth_burst",
         severity="high",
-        edge_ids=[edge.id],
+        edge_ids=[event.id],
         node_ids=list(distinct),
-        host_id=edge.host_id,
+        host_id=event.host_id,
         description=(
-            f"Auth burst on {edge.host_id}: {len(distinct)} distinct accounts "
+            f"Auth burst on {event.host_id}: {len(distinct)} distinct accounts "
             f"within {config.window_seconds}s window "
             f"(threshold: {config.distinct_account_threshold})"
         ),
