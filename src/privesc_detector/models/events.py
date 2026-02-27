@@ -32,7 +32,7 @@ def _utcnow() -> datetime:
 RawSource = Literal["crowdstrike", "unix_auth"]
 
 
-class BaseAuthEvent(BaseModel):
+class BaseEvent(BaseModel):
     """Shared fields for all confirmed auth event types."""
 
     id: str = Field(default_factory=_new_id)
@@ -61,7 +61,7 @@ class BaseAuthEvent(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
-class AuthenticationEvent(BaseAuthEvent):
+class AuthenticationEvent(BaseEvent):
     """A confirmed credential acquisition event (kinit, OIDC, certificate, etc.)."""
 
     event_category: Literal["authentication"] = "authentication"
@@ -71,7 +71,7 @@ class AuthenticationEvent(BaseAuthEvent):
     principal: str | None = None    # raw asserted identity (e.g. alice@REALM.CORP)
 
 
-class SessionEvent(BaseAuthEvent):
+class SessionEvent(BaseEvent):
     """A confirmed session establishment event (SSH, su, sudo, RDP, etc.)."""
 
     event_category: Literal["session"] = "session"
@@ -81,7 +81,7 @@ class SessionEvent(BaseAuthEvent):
 
 
 # Discriminated union — use for any code that handles both event types.
-AuthEvent = Annotated[
+AnyEvent = Annotated[
     Union[AuthenticationEvent, SessionEvent],
     Field(discriminator="event_category"),
 ]
