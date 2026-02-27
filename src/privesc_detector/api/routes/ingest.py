@@ -8,8 +8,8 @@ from pydantic import BaseModel
 from privesc_detector.api.dependencies import get_dispatcher, get_edge_store
 from privesc_detector.dispatcher import EventDispatcher
 from privesc_detector.graph.builder import load_graph
-from privesc_detector.models.alert import Alert
-from privesc_detector.models.events import AuthEvent
+from privesc_detector.model.alert import Alert
+from privesc_detector.model.event import AnyEvent
 from privesc_detector.store.edges import EdgeStore
 
 router = APIRouter()
@@ -22,7 +22,7 @@ class IngestResponse(BaseModel):
 
 @router.post("/ingest/event", response_model=IngestResponse)
 async def ingest_event(
-    event: AuthEvent,
+    event: AnyEvent,
     edge_store: EdgeStore = Depends(get_edge_store),
     dispatcher: EventDispatcher = Depends(get_dispatcher),
 ) -> IngestResponse:

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from privesc_detector.ingest import unix_auth
-from privesc_detector.models.events import AuthenticationEvent, BaseAuthEvent, SessionEvent
+from privesc_detector.model.event import AuthenticationEvent, BaseEvent, SessionEvent
 
 
 def test_fetch_events_returns_list() -> None:
@@ -14,7 +14,7 @@ def test_fetch_events_returns_list() -> None:
 
 def test_all_events_are_auth_events() -> None:
     for event in unix_auth.fetch_events():
-        assert isinstance(event, BaseAuthEvent)
+        assert isinstance(event, BaseEvent)
 
 
 def test_raw_source_is_unix_auth() -> None:

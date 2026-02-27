@@ -13,8 +13,8 @@ from privesc_detector.detections.auth_burst import BurstWindowState
 from privesc_detector.enrichment.cache import AllEnrichments
 from privesc_detector.enrichment.critical_accounts import CriticalAccountsCache, CriticalAccountsEnrichment
 from privesc_detector.enrichment.vault import VaultCache, VaultEnrichment
-from privesc_detector.models.events import AuthEvent, SessionEvent
-from privesc_detector.models.node import AccountNode, HostNode
+from privesc_detector.model.event import AnyEvent, SessionEvent
+from privesc_detector.model.node import AccountNode, HostNode
 
 
 # ---------------------------------------------------------------------------
@@ -77,10 +77,10 @@ def keytab_config() -> KeytabSmugglingConfig:
 
 
 @pytest.fixture
-def make_edge() -> Callable[..., AuthEvent]:
+def make_edge() -> Callable[..., AnyEvent]:
     """Factory: create a SessionEvent with sensible defaults, override via kwargs."""
 
-    def _factory(**kwargs: Any) -> AuthEvent:
+    def _factory(**kwargs: Any) -> AnyEvent:
         defaults: dict[str, Any] = {
             "src_account_id": "account:alice",
             "src_host_id": "host:web-01",

@@ -6,7 +6,7 @@ from datetime import datetime
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from privesc_detector.models.alert import Alert, DetectionType
+from privesc_detector.model.alert import Alert, DetectionType
 
 COLLECTION = "alerts"
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from privesc_detector.models.node import AccountNode, HostNode
+from privesc_detector.model.node import AccountNode, HostNode
 
 COLLECTION = "nodes"
 NodeModel = AccountNode | HostNode

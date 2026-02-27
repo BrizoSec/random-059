@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import networkx as nx
 
-from privesc_detector.models.events import AuthEvent
+from privesc_detector.model.event import AnyEvent
 
 
-def load_graph(events: list[AuthEvent]) -> nx.DiGraph:
+def load_graph(events: list[AnyEvent]) -> nx.DiGraph:
     """Build a directed graph from a list of auth events.
 
     Node attributes:
@@ -20,7 +20,7 @@ def load_graph(events: list[AuthEvent]) -> nx.DiGraph:
         host_id         -- host where the account was present at this node
 
     Edge attributes:
-        event_id        -- AuthEvent.id
+        event_id        -- AnyEvent.id
         event_category  -- "authentication" | "session"
         mechanism       -- e.g. "ssh", "kinit", "su"
         timestamp       -- event datetime (ISO string for JSON-serializability)
@@ -69,7 +69,7 @@ def _add_or_update_node(
         g.nodes[node_id]["privilege_tier"] = max(existing, privilege)
 
 
-def _event_attrs(event: AuthEvent) -> dict:  # type: ignore[type-arg]
+def _event_attrs(event: AnyEvent) -> dict:  # type: ignore[type-arg]
     return {
         "event_id": event.id,
         "event_category": event.event_category,

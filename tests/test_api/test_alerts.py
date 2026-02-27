@@ -9,7 +9,7 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from privesc_detector.models.alert import Alert
+from privesc_detector.model.alert import Alert
 from privesc_detector.store.alerts import AlertStore
 
 

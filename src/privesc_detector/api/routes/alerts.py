@@ -7,7 +7,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from privesc_detector.api.dependencies import get_alert_store
-from privesc_detector.models.alert import Alert, DetectionType
+from privesc_detector.model.alert import Alert, DetectionType
 from privesc_detector.store.alerts import AlertStore
 
 router = APIRouter()

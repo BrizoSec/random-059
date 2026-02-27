@@ -12,7 +12,7 @@ from __future__ import annotations
 from privesc_detector.config import KeytabSmugglingConfig
 from privesc_detector.detections.base import DetectionResult
 from privesc_detector.enrichment.cache import AllEnrichments
-from privesc_detector.models.events import AuthenticationEvent
+from privesc_detector.model.event import AuthenticationEvent
 
 
 def detect(

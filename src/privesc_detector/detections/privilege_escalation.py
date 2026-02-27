@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from privesc_detector.config import PrivEscConfig
 from privesc_detector.detections.base import DetectionResult
-from privesc_detector.models.events import AuthEvent
+from privesc_detector.model.event import AnyEvent
 
 
-def detect(event: AuthEvent, config: PrivEscConfig) -> DetectionResult | None:
+def detect(event: AnyEvent, config: PrivEscConfig) -> DetectionResult | None:
     """Return a DetectionResult if dst_privilege > src_privilege, else None."""
     if not config.enabled:
         return None

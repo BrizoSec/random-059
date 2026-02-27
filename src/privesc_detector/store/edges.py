@@ -7,10 +7,10 @@ from datetime import datetime
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import TypeAdapter
 
-from privesc_detector.models.events import AuthEvent
+from privesc_detector.model.event import AnyEvent
 
 COLLECTION = "edges"
-_event_adapter: TypeAdapter[AuthEvent] = TypeAdapter(AuthEvent)
+_event_adapter: TypeAdapter[AnyEvent] = TypeAdapter(AnyEvent)
 
 
 class EdgeStore:
@@ -22,22 +22,22 @@ class EdgeStore:
         await self._col.create_index([("src_node_id", 1), ("dst_node_id", 1)])
         await self._col.create_index([("timestamp", -1)])
 
-    async def insert(self, event: AuthEvent) -> str:
+    async def insert(self, event: AnyEvent) -> str:
         doc = event.model_dump(mode="json")
         await self._col.insert_one(doc)
         return event.id
 
-    async def get_recent(self, host_id: str, since: datetime) -> list[AuthEvent]:
+    async def get_recent(self, host_id: str, since: datetime) -> list[AnyEvent]:
         cursor = self._col.find(
             {"host_id": host_id, "timestamp": {"$gte": since.isoformat()}}
         ).sort("timestamp", -1)
         return [_event_adapter.validate_python(doc) async for doc in cursor]
 
-    async def get_by_ids(self, ids: list[str]) -> list[AuthEvent]:
+    async def get_by_ids(self, ids: list[str]) -> list[AnyEvent]:
         cursor = self._col.find({"id": {"$in": ids}})
         return [_event_adapter.validate_python(doc) async for doc in cursor]
 
-    async def get_all_for_graph(self) -> list[AuthEvent]:
+    async def get_all_for_graph(self) -> list[AnyEvent]:
         """Fetch all events for building the in-memory NetworkX graph."""
         cursor = self._col.find({})
         return [_event_adapter.validate_python(doc) async for doc in cursor]

@@ -5,17 +5,17 @@ auth.log / PAM / kinit parser would produce after normalization.
 All events are confirmed outcomes — failed attempts are not ingested.
 
 Replace `fetch_events()` with a real file-tail or syslog consumer when
-deploying. The return type contract (list[AuthEvent]) must be preserved.
+deploying. The return type contract (list[AnyEvent]) must be preserved.
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from privesc_detector.models.events import AuthEvent, AuthenticationEvent, SessionEvent
+from privesc_detector.model.event import AnyEvent, AuthenticationEvent, SessionEvent
 
 
-def fetch_events() -> list[AuthEvent]:
+def fetch_events() -> list[AnyEvent]:
     """Return mock Unix auth events as normalized event objects."""
     now = datetime.now(tz=timezone.utc)
     return [

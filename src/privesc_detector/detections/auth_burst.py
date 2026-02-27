@@ -16,7 +16,7 @@ from datetime import datetime, timedelta, timezone
 
 from privesc_detector.config import BurstConfig
 from privesc_detector.detections.base import DetectionResult
-from privesc_detector.models.events import AuthEvent
+from privesc_detector.model.event import AnyEvent
 
 # (timestamp, account_id) tuples stored per host
 _Event = tuple[datetime, str]
@@ -73,7 +73,7 @@ class BurstWindowState:
 
 
 def detect(
-    event: AuthEvent,
+    event: AnyEvent,
     state: BurstWindowState,
     config: BurstConfig,
 ) -> DetectionResult | None:

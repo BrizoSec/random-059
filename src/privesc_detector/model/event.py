@@ -7,7 +7,7 @@ Both types share a compound (account, host) node model:
     src_node_id = "{src_account_id}|{src_host_id}"
     dst_node_id = "{dst_account_id}|{dst_host_id}"
 
-Use the AuthEvent union type for code that handles either type.
+Use the AnyEvent union type for code that handles either type.
 Use the concrete types (AuthenticationEvent, SessionEvent) for
 detection functions that are scoped to one category.
 """

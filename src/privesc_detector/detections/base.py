@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from privesc_detector.models.alert import DetectionType, Severity
+from privesc_detector.model.alert import DetectionType, Severity
 
 
 @dataclass

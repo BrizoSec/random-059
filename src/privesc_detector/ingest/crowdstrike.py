@@ -5,7 +5,7 @@ Falcon Event Streams / Detections API would produce after normalization.
 CrowdStrike events are confirmed outcomes (session established, su succeeded).
 
 Replace this module's `fetch_events()` with a real Falcon API client when
-credentials are available. The return type contract (list[AuthEvent]) must
+credentials are available. The return type contract (list[AnyEvent]) must
 be preserved.
 """
 
@@ -13,10 +13,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from privesc_detector.models.events import AuthEvent, SessionEvent
+from privesc_detector.model.event import AnyEvent, SessionEvent
 
 
-def fetch_events() -> list[AuthEvent]:
+def fetch_events() -> list[AnyEvent]:
     """Return mock CrowdStrike auth events as normalized event objects."""
     now = datetime.now(tz=timezone.utc)
     return [

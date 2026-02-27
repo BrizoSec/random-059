@@ -10,7 +10,7 @@ import pytest
 from privesc_detector.config import KeytabSmugglingConfig
 from privesc_detector.detections import keytab_smuggling
 from privesc_detector.enrichment.cache import AllEnrichments
-from privesc_detector.models.events import AuthenticationEvent
+from privesc_detector.model.event import AuthenticationEvent
 
 
 def _make_kinit_edge(**kwargs: Any) -> AuthenticationEvent:

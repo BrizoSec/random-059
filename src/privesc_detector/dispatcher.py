@@ -21,8 +21,8 @@ from privesc_detector.detections import auth_burst, auth_chain, keytab_smuggling
 from privesc_detector.detections.auth_burst import BurstWindowState
 from privesc_detector.detections.base import DetectionResult
 from privesc_detector.enrichment.cache import EnrichmentCacheManager
-from privesc_detector.models.alert import Alert
-from privesc_detector.models.events import AuthEvent, AuthenticationEvent
+from privesc_detector.model.alert import Alert
+from privesc_detector.model.event import AnyEvent, AuthenticationEvent
 from privesc_detector.store.alerts import AlertStore
 
 
@@ -40,7 +40,7 @@ class EventDispatcher:
         self._config = config
 
     async def on_event_inserted(
-        self, event: AuthEvent, graph: nx.DiGraph
+        self, event: AnyEvent, graph: nx.DiGraph
     ) -> list[Alert]:
         """Run all applicable detections against the new event and persist any alerts.
 
