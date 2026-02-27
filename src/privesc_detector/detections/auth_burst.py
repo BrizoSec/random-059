@@ -85,7 +85,7 @@ def detect(
     state.record(
         host_id=edge.host_id,
         timestamp=ts,
-        account_id=edge.src_node_id,
+        account_id=edge.src_account_id,
         max_events=config.max_events_tracked,
     )
 

@@ -19,8 +19,10 @@ def fetch_events() -> list[AuthEdge]:
     now = datetime.now(tz=timezone.utc)
     return [
         AuthEdge(
-            src_node_id="account:alice",
-            dst_node_id="host:app-dev-02",
+            src_account_id="account:alice",
+            src_host_id="host:alice-workstation",
+            dst_account_id="account:alice",
+            dst_host_id="host:app-dev-02",
             edge_type="ssh",
             src_privilege=0.1,
             dst_privilege=0.3,
@@ -33,8 +35,10 @@ def fetch_events() -> list[AuthEdge]:
             },
         ),
         AuthEdge(
-            src_node_id="account:alice",
-            dst_node_id="account:alice-admin",
+            src_account_id="account:alice",
+            src_host_id="host:app-dev-02",
+            dst_account_id="account:alice-admin",
+            dst_host_id="host:app-dev-02",
             edge_type="kinit",
             src_privilege=0.1,
             dst_privilege=0.6,
@@ -50,8 +54,10 @@ def fetch_events() -> list[AuthEdge]:
             },
         ),
         AuthEdge(
-            src_node_id="account:alice-admin",
-            dst_node_id="host:bastion-01",
+            src_account_id="account:alice-admin",
+            src_host_id="host:app-dev-02",
+            dst_account_id="account:alice-admin",
+            dst_host_id="host:bastion-01",
             edge_type="ssh",
             src_privilege=0.6,
             dst_privilege=0.8,

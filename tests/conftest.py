@@ -57,8 +57,10 @@ def make_edge() -> Callable[..., AuthEdge]:
 
     def _factory(**kwargs: Any) -> AuthEdge:
         defaults: dict[str, Any] = {
-            "src_node_id": "account:alice",
-            "dst_node_id": "account:bob",
+            "src_account_id": "account:alice",
+            "src_host_id": "host:web-01",
+            "dst_account_id": "account:bob",
+            "dst_host_id": "host:web-01",
             "edge_type": "ssh",
             "src_privilege": 0.2,
             "dst_privilege": 0.2,

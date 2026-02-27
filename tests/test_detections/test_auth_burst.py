@@ -24,7 +24,7 @@ def test_no_alert_below_threshold(
 ) -> None:
     # threshold=3 — fire 2 distinct accounts, expect no alert
     for i in range(2):
-        edge = make_edge(src_node_id=f"account:user{i}", timestamp=_ts(i))
+        edge = make_edge(src_account_id=f"account:user{i}", timestamp=_ts(i))
         result = auth_burst.detect(edge, burst_state, burst_config)
     assert result is None
 
@@ -37,7 +37,7 @@ def test_alert_at_threshold(
     # threshold=3 — fire 3 distinct accounts in quick succession
     result = None
     for i in range(3):
-        edge = make_edge(src_node_id=f"account:user{i}", timestamp=_ts(i))
+        edge = make_edge(src_account_id=f"account:user{i}", timestamp=_ts(i))
         result = auth_burst.detect(edge, burst_state, burst_config)
     assert result is not None
     assert result.detection_type == "auth_burst"
@@ -52,7 +52,7 @@ def test_same_account_repeated_does_not_inflate_count(
     # Same account repeated — should still count as 1 distinct
     result = None
     for i in range(10):
-        edge = make_edge(src_node_id="account:alice", timestamp=_ts(i))
+        edge = make_edge(src_account_id="account:alice", timestamp=_ts(i))
         result = auth_burst.detect(edge, burst_state, burst_config)
     assert result is None  # only 1 distinct account
 
@@ -64,12 +64,12 @@ def test_window_eviction(
     config = BurstConfig(window_seconds=30, distinct_account_threshold=3)
     # Add 2 accounts at t=0
     for i in range(2):
-        edge = make_edge(src_node_id=f"account:old{i}", timestamp=_ts(0))
+        edge = make_edge(src_account_id=f"account:old{i}", timestamp=_ts(0))
         auth_burst.detect(edge, burst_state, config)
 
     # Advance time by 60s (outside the 30s window) and add 1 new account
     # Only 1 account should be in window — below threshold
-    edge = make_edge(src_node_id="account:new0", timestamp=_ts(60))
+    edge = make_edge(src_account_id="account:new0", timestamp=_ts(60))
     result = auth_burst.detect(edge, burst_state, config)
     assert result is None
     # Verify old events were evicted
@@ -88,14 +88,14 @@ def test_per_host_isolation(
     # Events on host-A should not affect host-B's window
     for i in range(3):
         edge = make_edge(
-            src_node_id=f"account:user{i}",
+            src_account_id=f"account:user{i}",
             host_id="host:host-a",
             timestamp=_ts(i),
         )
         auth_burst.detect(edge, burst_state, burst_config)
 
     # host-B has no events — should not alert
-    edge_b = make_edge(src_node_id="account:user0", host_id="host:host-b", timestamp=_ts(0))
+    edge_b = make_edge(src_account_id="account:user0", host_id="host:host-b", timestamp=_ts(0))
     result = auth_burst.detect(edge_b, burst_state, burst_config)
     assert result is None
 
@@ -108,7 +108,7 @@ def test_alert_includes_host_id(
     result = None
     for i in range(3):
         edge = make_edge(
-            src_node_id=f"account:user{i}",
+            src_account_id=f"account:user{i}",
             host_id="host:target",
             timestamp=_ts(i),
         )
@@ -123,11 +123,11 @@ def test_state_reset_clears_window(
 ) -> None:
     state = BurstWindowState()
     for i in range(3):
-        edge = make_edge(src_node_id=f"account:user{i}", timestamp=_ts(i))
+        edge = make_edge(src_account_id=f"account:user{i}", timestamp=_ts(i))
         auth_burst.detect(edge, state, burst_config)
 
     state.reset()
     # After reset, the 4th unique account should not trigger
-    edge = make_edge(src_node_id="account:user99", timestamp=_ts(100))
+    edge = make_edge(src_account_id="account:user99", timestamp=_ts(100))
     result = auth_burst.detect(edge, state, burst_config)
     assert result is None

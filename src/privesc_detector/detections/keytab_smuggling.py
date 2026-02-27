@@ -39,7 +39,7 @@ def detect(
         if not in_vault
         else f"keytab '{keytab_path}' not expected on {edge.host_id}"
     )
-    is_critical = enrichments.critical_accounts.is_critical(edge.src_node_id)
+    is_critical = enrichments.critical_accounts.is_critical(edge.src_account_id)
     severity = "critical" if is_critical else "high"
 
     return DetectionResult(
@@ -50,7 +50,7 @@ def detect(
         host_id=edge.host_id,
         description=(
             f"Keytab smuggling on {edge.host_id}: {reason} "
-            f"(account: {edge.src_node_id})"
+            f"(account: {edge.src_account_id})"
         ),
         metadata={
             "keytab_path": keytab_path,

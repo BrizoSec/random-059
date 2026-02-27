@@ -32,8 +32,8 @@ def load_graph(edges: list[AuthEdge]) -> nx.DiGraph:
     for edge in edges:
         # Upsert nodes — later edges may carry higher privilege values; we keep
         # the maximum seen so we don't accidentally downgrade a node's tier.
-        _add_or_update_node(g, edge.src_node_id, edge.src_privilege, edge.host_id)
-        _add_or_update_node(g, edge.dst_node_id, edge.dst_privilege, edge.host_id)
+        _add_or_update_node(g, edge.src_node_id, edge.src_privilege, edge.src_host_id)
+        _add_or_update_node(g, edge.dst_node_id, edge.dst_privilege, edge.dst_host_id)
 
         # For parallel edges (same src→dst pair) we store a list of edge dicts
         # under a single DiGraph edge keyed by the first edge_id we see.

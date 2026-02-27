@@ -20,8 +20,10 @@ def fetch_events() -> list[AuthEdge]:
     now = datetime.now(tz=timezone.utc)
     return [
         AuthEdge(
-            src_node_id="account:jsmith",
-            dst_node_id="account:svc-deploy",
+            src_account_id="account:jsmith",
+            src_host_id="host:web-prod-01",
+            dst_account_id="account:svc-deploy",
+            dst_host_id="host:web-prod-01",
             edge_type="su",
             src_privilege=0.2,
             dst_privilege=0.7,
@@ -35,8 +37,10 @@ def fetch_events() -> list[AuthEdge]:
             },
         ),
         AuthEdge(
-            src_node_id="account:svc-deploy",
-            dst_node_id="account:root",
+            src_account_id="account:svc-deploy",
+            src_host_id="host:web-prod-01",
+            dst_account_id="account:root",
+            dst_host_id="host:web-prod-01",
             edge_type="su",
             src_privilege=0.7,
             dst_privilege=1.0,
@@ -50,12 +54,14 @@ def fetch_events() -> list[AuthEdge]:
             },
         ),
         AuthEdge(
-            src_node_id="host:web-prod-01",
-            dst_node_id="host:db-prod-01",
+            src_account_id="account:jsmith",
+            src_host_id="host:web-prod-01",
+            dst_account_id="account:jsmith",
+            dst_host_id="host:db-prod-01",
             edge_type="ssh",
             src_privilege=0.5,
             dst_privilege=0.5,
-            host_id="host:web-prod-01",
+            host_id="host:db-prod-01",
             raw_source="crowdstrike",
             timestamp=now,
             metadata={
